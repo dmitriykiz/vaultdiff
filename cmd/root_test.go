@@ -47,3 +47,12 @@ func TestRootCmd_HelpOutput(t *testing.T) {
 		t.Error("expected help output, got empty buffer")
 	}
 }
+
+func TestExecute_InvalidFormat(t *testing.T) {
+	// Providing an unsupported format value should return an error
+	rootCmd.SetArgs([]string{"--format", "xml", "path/a", "path/b"})
+	err := rootCmd.Execute()
+	if err == nil {
+		t.Error("expected error for invalid format 'xml', got nil")
+	}
+}
