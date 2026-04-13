@@ -35,3 +35,9 @@ func (c *Client) RecurseSecrets(mount, subpath string, engineType EngineType) ([
 	}
 	return paths, nil
 }
+
+// RecurseSecretsFromRoot walks a Vault mount from its root and returns all leaf
+// secret paths. It is a convenience wrapper around RecurseSecrets.
+func (c *Client) RecurseSecretsFromRoot(mount string, engineType EngineType) ([]string, error) {
+	return c.RecurseSecrets(mount, "", engineType)
+}
