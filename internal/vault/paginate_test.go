@@ -97,3 +97,28 @@ func TestPaginatedClient_EachPage_EmptyKeys(t *testing.T) {
 		t.Error("callback should not be called for empty key list")
 	}
 }
+
+// TestPaginatedClient_EachPage_ExactPageBoundary verifies that pagination
+// works correctly when the total number of keys is an exact multiple of
+// the page size (no partial last page).
+func TestPaginatedClient_EachPage_ExactPageBoundary(t *testing.T) {
+	keys := []string{"k1", "k2", "k3", "k4"}
+	srv := pagedTestServer(t, keys)
+	defer srv.Close()
+
+	client := NewPaginatedClient(newTestClient(t, srv), 2)
+
+	var collected []string
+	err := client.EachPage(context.Background(), "secret", "", func(page map[string]map[string]interface{}) error {
+		for k := range page {
+			collected = append(collected, k)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(collected) != len(keys) {
+		t.Errorf("expected %d keys, got %d", len(keys), len(collected))
+	}
+}
