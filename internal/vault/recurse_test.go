@@ -94,3 +94,36 @@ func TestRecurseSecrets_EmptyMount(t *testing.T) {
 		t.Fatal("expected error for empty/missing mount, got nil")
 	}
 }
+
+func TestRecurseSecrets_WithPrefix(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "LIST" {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"data": map[string]interface{}{"keys": []string{"foo", "bar"}},
+		})
+	}))
+	defer server.Close()
+
+	client := newTestClient(t, server.URL)
+	paths, err := client.RecurseSecrets("secret", "myprefix/", KVv1)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := []string{"myprefix/foo", "myprefix/bar"}
+	sort.Strings(paths)
+	sort.Strings(expected)
+
+	if len(paths) != len(expected) {
+		t.Fatalf("expected %v, got %v", expected, paths)
+	}
+	for i := range expected {
+		if paths[i] != expected[i] {
+			t.Errorf("index %d: expected %q, got %q", i, expected[i], paths[i])
+		}
+	}
+}
